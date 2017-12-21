@@ -21,18 +21,36 @@ def test_function():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    #print("Data is\n", request.json)
+    print("Data is\n", request.json)
+    input_df=model_utils.transform(request.json)
+    print("Data transformed\n",input_df)
+
     if model:
         print("model exists")
         try:
-            input_df = pd.DataFrame(request.json)
+            #input_df = pd.DataFrame(request.json)
             predictions = model_utils.predict(input_df, model)
+            #print("Predictions", predictions)
             return jsonify(predictions)
         except Exception as e:
             return jsonify({'error': str(e), 'trace': traceback.format_exc()})
     else:
         print('You need to train a model before you can make predictions.')
         return 'error: no model'
+
+
+@app.route('/update', methods=['POST'])
+def update():
+    #print("Data is\n", request.json)
+    X=model_utils.transform_update(request.json)[0]
+    y=model_utils.transform_update(request.json)[1]
+    #print("X ",X)
+    #print("y ",y)
+    model_utils.update(model,X,y)
+    joblib.dump(model, model_utils.MODEL_FILE_NAME)
+    print("new model dumped")    
+
+    return "Success"
 
 
 if __name__ == '__main__':
